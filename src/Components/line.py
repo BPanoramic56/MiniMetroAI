@@ -6,6 +6,8 @@ from typing import List, Tuple
 from TypeEnums import StationType
 from station import Station
 
+TRAIN_CAPACITY = 5
+
 # Visual constants
 LINE_COLORS: List[Tuple[int, int, int]] = [
     (255, 150, 150),
@@ -23,6 +25,7 @@ class Line:
         self.destination: Station = destination
         self.color: Tuple[int, int, int] = LINE_COLORS[randint(0, len(LINE_COLORS) - 1)]
         self.width: int = LINE_WIDTH
+        self.types: List[StationType] = [self.origin.station, self.destination.station]
         
     def render(self, screen: pygame.Surface) -> None:
         """Render the line connecting two stations."""

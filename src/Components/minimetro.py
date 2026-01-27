@@ -6,6 +6,7 @@ from typing import List, Optional, Tuple, Dict
 
 from station import Station
 from line import Line
+from train import Train
 
 # Fixed constants
 WIDTH: int      = 800
@@ -45,6 +46,7 @@ class MiniMetro:
         self.selected_station: Optional[Station] = None
         
         self.lines: List[Line] = []
+        self.trains: List[Train] = []
     
     def get_elapsed_time(self) -> float:
         """Get time elapsed since game start in seconds."""
@@ -60,6 +62,8 @@ class MiniMetro:
         
         for line in self.lines:
             line.render(self.screen)
+        for train in self.trains:
+            train.render(self.screen)
         for station in self.stations:
             station.render(self.screen, station == self.selected_station)
         
@@ -115,6 +119,8 @@ class MiniMetro:
             self.create_station()
         for station in self.stations:
             station.update()
+        for train in self.trains:
+            train.update()
     
     def check_line(self, origin: Station, destination: Station) -> bool:
         """Check if a line between origin and destination already exists."""
@@ -134,7 +140,10 @@ class MiniMetro:
                 
                 if self.selected_station and station.id != self.selected_station.id:
                     if self.check_line(self.selected_station, station):
-                        self.lines.append(Line(self.selected_station, station))
+                        new_line = Line(self.selected_station, station)
+                        self.lines.append(new_line)
+                        self.trains.append(Train(new_line))
+                        print(f"Created line and train between {self.selected_station.type()} and {station.type()}")
                         self.selected_station = None
                         break
                 else:

@@ -1,4 +1,5 @@
 import pygame
+import random
 
 import minimetro
 
@@ -19,6 +20,11 @@ if __name__ == "__main__":
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_s:
                     metro.create_station()
+                elif event.key == pygame.K_t:
+                    if metro.lines:
+                        line = random.choice(metro.lines)
+                        metro.trains.append(minimetro.Train(line))
+                        print(f"Created train on line (Total: {len(metro.trains)})")
             elif event.type == pygame.MOUSEBUTTONUP:
                 pos = pygame.mouse.get_pos()
                 metro.check_location(pos)
