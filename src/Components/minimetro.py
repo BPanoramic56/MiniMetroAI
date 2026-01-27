@@ -3,6 +3,7 @@ import time
 
 from random import randint
 from enum import Enum
+from typing import Tuple
 
 from station import Station
 from line import Line
@@ -56,10 +57,10 @@ class MiniMetro:
         """Render all game elements to screen."""
         self.screen.fill(COLORS["BG_COLOR"])
         
-        for station in self.stations:
-            station.render(self.screen)
         for line in self.lines:
             line.render(self.screen)
+        for station in self.stations:
+            station.render(self.screen, station == self.selected_station)
         
         ui_rect = pygame.Rect(0, HEIGHT - UI_HEIGHT, WIDTH, UI_HEIGHT)
         pygame.draw.rect(self.screen, COLORS["UI_COLOR"], ui_rect)
@@ -83,7 +84,7 @@ class MiniMetro:
                 return False
         return True
     
-    def create_location(self) -> tuple[int, int]:
+    def create_location(self) -> Tuple[int, int]:
         """Generate a valid random location for a new station."""
         max_attempts = 100
         attempt = 0

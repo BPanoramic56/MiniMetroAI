@@ -5,13 +5,13 @@ import minimetro
 # Design constants
 START_STATIONS: int = 3
 
-metro = minimetro.MiniMetro()
+metro: minimetro.MiniMetro = minimetro.MiniMetro()
 
 if __name__ == "__main__":
     for _ in range(START_STATIONS):
         metro.create_station()
     
-    running = True
+    running: bool = True
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:

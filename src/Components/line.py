@@ -2,8 +2,9 @@ import pygame
 
 from station import Station
 from random import randint
+from typing import List, Tuple
 
-line_colors: list[tuple] = [
+line_colors: List[Tuple] = [
 	(255, 150, 150),
 	(150, 255, 150),
 	(150, 150, 255)
@@ -13,7 +14,7 @@ class Line:
 	def __init__(self, origin: Station, destination: Station):
 		self.origin: Station = origin
 		self.destination: Station = destination
-		self.color = line_colors[randint(0, len(line_colors)- 1)]
+		self.color = line_colors[randint(0, len(line_colors) - 1)]
 		self.width = 10
         
 	def render(self, screen: pygame.Surface):
