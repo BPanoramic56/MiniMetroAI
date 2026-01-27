@@ -1,10 +1,15 @@
-from src.Components.line import Line
-from station import Station, StationType
+from uuid import uuid1, UUID
 
-RIDER_PATIENCE: float = 30.0 # Amount of time a rider will wait for a train. In the game, getting this to zero results in a loss, let's implement that later
+from TypeEnums import StationType
+
+# Design constants
+RIDER_PATIENCE: float = 30.0
 
 class Rider:
-    def __init__(self, origin: Station, destination: StationType):
-        self.origin: Station = origin,
-        self.destination: StationType = destination # Doesn't care about the actual station, just the station type (example: wants to go from Triangle2 to any Circle)
+    """Represents a passenger waiting at a station."""
+    
+    def __init__(self, origin: UUID, destination: StationType):
+        self.origin_id: UUID = origin
+        self.destination_type: StationType = destination
         self.patience: float = RIDER_PATIENCE
+        self.id: UUID = uuid1()

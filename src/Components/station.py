@@ -1,23 +1,22 @@
 import pygame
+import time
 
-from enum import Enum
 from random import randint
-from uuid import uuid1
+from uuid import uuid1, UUID
+from typing import List, Tuple
 
-# Design Constants
-STATION_LIMIT: int = 20 # Total amount of riders a station can hold at once
+from TypeEnums import StationType
+from rider import Rider
+
+# Design constants
+STATION_LIMIT: int = 20
+RIDER_SPAWN_INTERVAL: float = 15.0
 
 # Visual constants
 STATION_SIZE: int = 20
-STATION_COLOR = (100, 100, 100)
-SELECTED_COLOR = (100, 100, 150)
+STATION_COLOR: Tuple[int, int, int] = (150, 150, 150)
+SELECTED_COLOR: Tuple[int, int, int] = (150, 150, 250)
 
-
-class StationType(Enum):
-    """Types of stations with different shapes."""
-    Circle = 0
-    Triangle = 1
-    Square = 2
 
 class Station:
     """Represents a metro station with a shape and position."""
@@ -26,8 +25,10 @@ class Station:
         self.station: StationType = StationType(randint(0, len(StationType) - 1))
         self.x: int = x
         self.y: int = y
-        self.id: int = uuid1()
+        self.id: UUID = uuid1()
         self.limit: int = STATION_LIMIT
+        self.last_spawn_time: float = time.time()
+        self.riders: List[Rider] = []
     
     def type(self) -> str:
         """Get the station type name."""
@@ -53,3 +54,18 @@ class Station:
         elif self.station == StationType.Square:
             rect = pygame.Rect(self.x - STATION_SIZE, self.y - STATION_SIZE, STATION_SIZE * 2, STATION_SIZE * 2)
             pygame.draw.rect(screen, color, rect)
+    
+    def should_create_rider(self) -> bool:
+        """Check if enough time has passed to spawn a new rider."""
+        if time.time() - self.last_spawn_time >= RIDER_SPAWN_INTERVAL:
+            self.last_spawn_time = time.time()
+            return True
+        return False
+
+    def update(self) -> None:
+        """Update station state (spawn riders)."""
+        if self.should_create_rider() and len(self.riders) < self.limit:
+            destination_type = StationType(randint(0, len(StationType) - 1))
+            new_rider = Rider(self.id, destination_type)
+            self.riders.append(new_rider)
+            print(f"New rider at {self.describe()}: wants {destination_type.name} ({len(self.riders)} waiting)")

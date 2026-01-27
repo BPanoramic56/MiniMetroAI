@@ -2,8 +2,7 @@ import pygame
 import time
 
 from random import randint
-from enum import Enum
-from typing import Tuple
+from typing import List, Optional, Tuple, Dict
 
 from station import Station
 from line import Line
@@ -17,33 +16,35 @@ UI_HEIGHT: int  = 60
 # Design constants
 STATION_SPACING: int            = 80
 STATION_SPAWN_INTERVAL: float   = 10.0
-CLICK_SPACING: int              = 10 # Half of STATION_SIZE seems to be enough
+CLICK_SPACING: int              = 20
+STATION_MAX: int                = 100
 
 # Visual constants
-COLORS = {
-    "BG_COLOR":         (14, 14, 41),
+COLORS: Dict[str, Tuple[int, int, int]] = {
+    "BG_COLOR":         (14, 14, 14),
     "UI_COLOR":         (186, 167, 176),
     "UI_LINE_COLOR":    (11, 110, 79),
     "UI_TEXT_COLOR":    (27, 82, 153)
 }
+
 
 class MiniMetro:
     """Main game class for MiniMetro simulation."""
     
     def __init__(self):
         pygame.init()
-        self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
+        self.screen: pygame.Surface = pygame.display.set_mode((WIDTH, HEIGHT))
         pygame.display.set_caption("MiniMetro")
-        self.clock = pygame.time.Clock()
-        self.font = pygame.font.Font(None, 28)
-        self.large_font = pygame.font.Font(None, 36)
+        self.clock: pygame.time.Clock = pygame.time.Clock()
+        self.font: pygame.font.Font = pygame.font.Font(None, 28)
+        self.large_font: pygame.font.Font = pygame.font.Font(None, 36)
         
-        self.stations: list[Station] = []
+        self.stations: List[Station] = []
         self.start_time: float = time.time()
         self.last_spawn_time: float = time.time()
-        self.selected_station: Station = None
+        self.selected_station: Optional[Station] = None
         
-        self.lines: list[Line] = []
+        self.lines: List[Line] = []
     
     def get_elapsed_time(self) -> float:
         """Get time elapsed since game start in seconds."""
@@ -110,20 +111,26 @@ class MiniMetro:
     
     def update(self) -> None:
         """Update game state (auto-spawn stations)."""
-        if self.should_auto_spawn():
+        if self.should_auto_spawn() and len(self.stations) < STATION_MAX:
             self.create_station()
+        for station in self.stations:
+            station.update()
     
-    def check_line(self, origin: Station, destination: Station):
+    def check_line(self, origin: Station, destination: Station) -> bool:
+        """Check if a line between origin and destination already exists."""
         for line in self.lines:
-            if (origin.id == line.origin.id and destination.id == line.destination.id) or (origin.id == line.destination.id and destination.id == line.origin.id):
+            if (origin.id == line.origin.id and destination.id == line.destination.id) or \
+               (origin.id == line.destination.id and destination.id == line.origin.id):
                 return False
         return True
             
-    def check_location(self, location):
+    def check_location(self, location: Tuple[int, int]) -> None:
+        """Check if a location has been clicked and handle station/line interactions."""
         x, y = location
         spacing = CLICK_SPACING
         for station in self.stations:
-            if x + spacing >= station.x and x - spacing <= station.x and y + spacing >= station.y and y - spacing <= station.y:
+            if x + spacing >= station.x and x - spacing <= station.x and \
+               y + spacing >= station.y and y - spacing <= station.y:
                 
                 if self.selected_station and station.id != self.selected_station.id:
                     if self.check_line(self.selected_station, station):
@@ -131,6 +138,6 @@ class MiniMetro:
                         self.selected_station = None
                         break
                 else:
-                    print(f"Station cliked: {station.describe()}")
+                    print(f"Station clicked: {station.describe()}")
                     self.selected_station = station
                     break
