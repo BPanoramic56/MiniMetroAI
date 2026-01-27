@@ -60,12 +60,13 @@ class MiniMetro:
         """Render all game elements to screen."""
         self.screen.fill(COLORS["BG_COLOR"])
         
+        # In order of background-to-foreground
         for line in self.lines:
             line.render(self.screen)
-        for train in self.trains:
-            train.render(self.screen)
         for station in self.stations:
             station.render(self.screen, station == self.selected_station)
+        for train in self.trains:
+            train.render(self.screen)
         
         ui_rect = pygame.Rect(0, HEIGHT - UI_HEIGHT, WIDTH, UI_HEIGHT)
         pygame.draw.rect(self.screen, COLORS["UI_COLOR"], ui_rect)

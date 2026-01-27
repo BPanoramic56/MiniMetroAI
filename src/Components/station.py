@@ -10,12 +10,13 @@ from rider import Rider
 
 # Design constants
 STATION_LIMIT: int = 20
-RIDER_SPAWN_INTERVAL: float = 3.0
+RIDER_SPAWN_INTERVAL: float = 1.0
 
 # Visual constants
 STATION_SIZE: int = 20
 STATION_COLOR: Tuple[int, int, int] = (150, 150, 150)
 SELECTED_COLOR: Tuple[int, int, int] = (150, 150, 250)
+
 
 class Station:
     """Represents a metro station with a shape and position."""
@@ -53,13 +54,13 @@ class Station:
         elif self.station == StationType.Square:
             rect = pygame.Rect(self.x - STATION_SIZE, self.y - STATION_SIZE, STATION_SIZE * 2, STATION_SIZE * 2)
             pygame.draw.rect(screen, color, rect)
-        
+    
         rider_y: int = self.y - 20
         rider_x: int = self.x + 30
         for rider in self.riders:
             rider.render(screen, rider_x, rider_y)
             rider_x += 15
-    
+
     def should_create_rider(self) -> bool:
         """Check if enough time has passed to spawn a new rider."""
         if time.time() - self.last_spawn_time >= RIDER_SPAWN_INTERVAL:
