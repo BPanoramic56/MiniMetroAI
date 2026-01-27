@@ -2,8 +2,10 @@ import pygame
 import time
 
 from random import randint
+from enum import Enum
 
-from station import StationDesigner
+from station import Station
+from line import Line
 
 # Fixed constants
 WIDTH: int      = 800
@@ -24,7 +26,6 @@ COLORS = {
     "UI_TEXT_COLOR":    (27, 82, 153)
 }
 
-
 class MiniMetro:
     """Main game class for MiniMetro simulation."""
     
@@ -36,9 +37,12 @@ class MiniMetro:
         self.font = pygame.font.Font(None, 28)
         self.large_font = pygame.font.Font(None, 36)
         
-        self.stations: list[StationDesigner] = []
+        self.stations: list[Station] = []
         self.start_time: float = time.time()
         self.last_spawn_time: float = time.time()
+        self.selected_station: Station = None
+        
+        self.lines: list[Line] = []
     
     def get_elapsed_time(self) -> float:
         """Get time elapsed since game start in seconds."""
@@ -54,6 +58,8 @@ class MiniMetro:
         
         for station in self.stations:
             station.render(self.screen)
+        for line in self.lines:
+            line.render(self.screen)
         
         ui_rect = pygame.Rect(0, HEIGHT - UI_HEIGHT, WIDTH, UI_HEIGHT)
         pygame.draw.rect(self.screen, COLORS["UI_COLOR"], ui_rect)
@@ -96,7 +102,7 @@ class MiniMetro:
     def create_station(self) -> None:
         """Create a new station at a valid location."""
         x, y = self.create_location()
-        station = StationDesigner(x, y)
+        station = Station(x, y)
         self.stations.append(station)
         self.last_spawn_time = time.time()
         print(f"Created ({len(self.stations)}): {station.describe()}")
@@ -105,10 +111,25 @@ class MiniMetro:
         """Update game state (auto-spawn stations)."""
         if self.should_auto_spawn():
             self.create_station()
+    
+    def check_line(self, origin: Station, destination: Station):
+        for line in self.lines:
+            if (origin.id == line.origin.id and destination.id == line.destination.id) or (origin.id == line.destination.id and destination.id == line.origin.id):
+                return False
+        return True
             
     def check_location(self, location):
         x, y = location
         spacing = CLICK_SPACING
         for station in self.stations:
             if x + spacing >= station.x and x - spacing <= station.x and y + spacing >= station.y and y - spacing <= station.y:
-                print(f"Station cliked: {station.describe()}")
+                
+                if self.selected_station and station.id != self.selected_station.id:
+                    if self.check_line(self.selected_station, station):
+                        self.lines.append(Line(self.selected_station, station))
+                        self.selected_station = None
+                        break
+                else:
+                    print(f"Station cliked: {station.describe()}")
+                    self.selected_station = station
+                    break
