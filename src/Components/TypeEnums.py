@@ -22,9 +22,9 @@ class TrainType(Enum):
     @property
     def speed(self) -> int:
         return {
-            TrainType.Regular: 2.0,
-            TrainType.Express: 3.2,
-            TrainType.HighCapacity: 1.5,
+            TrainType.Regular: 4.0,
+            TrainType.Express: 6.4,
+            TrainType.HighCapacity: 2.0,
         }[self]
     
 # TODO: Possible later implementations

@@ -3,6 +3,7 @@ import time
 
 from random import randint
 from typing import List, Optional, Tuple, Dict
+from uuid import UUID
 
 from station import Station
 from line import Line
@@ -45,12 +46,12 @@ class MiniMetro:
         self.start_time: float = time.time()
         self.last_spawn_time: float = time.time()
         self.selected_station: Optional[Station] = None
+        self.selected_line: Optional[Line] = None
         
         self.lines: List[Line] = []
         self.trains: List[Train] = []
 
-        # Tracking info
-        self.tracker = Tracker() # Decided to offload this to another class to reduce the amount of variables in here
+        self.tracker = Tracker()
     
     def get_elapsed_time(self) -> float:
         """Get time elapsed since game start in seconds."""
@@ -141,6 +142,35 @@ class MiniMetro:
                (origin.id == line.destination.id and destination.id == line.origin.id):
                 return False
         return True
+    
+    def delete_line(self, line_id: UUID) -> bool:
+        """Delete a line and all trains on that line."""
+        line_to_remove = None
+        for line in self.lines:
+            if line.id == line_id:
+                line_to_remove = line
+                break
+        
+        if line_to_remove:
+            self.lines.remove(line_to_remove)
+            self.trains = [train for train in self.trains if train.line.id != line_id]
+            print(f"Deleted line {line_id}")
+            return True
+        return False
+    
+    def delete_train(self, train_id: UUID) -> bool:
+        """Delete a specific train."""
+        train_to_remove = None
+        for train in self.trains:
+            if train.id == train_id:
+                train_to_remove = train
+                break
+        
+        if train_to_remove:
+            self.trains.remove(train_to_remove)
+            print(f"Deleted train {train_id}")
+            return True
+        return False
             
     def check_location(self, location: Tuple[int, int]) -> None:
         """Check if a location has been clicked and handle station/line interactions."""
@@ -152,13 +182,35 @@ class MiniMetro:
                 
                 if self.selected_station:
                     if station.id != self.selected_station.id:
-                        if self.check_line(self.selected_station, station):
-                            new_line = Line(self.selected_station, station)
+                        # Check if we should extend an existing line
+                        line_to_extend = None
+                        for line in self.lines:
+                            if line.destination.id == self.selected_station.id and not line.circular:
+                                line_to_extend = line
+                                break
+                        
+                        if line_to_extend:
+                            # Extend the existing line
+                            if line_to_extend.add_station(station):
+                                # Recalculate distances for trains on this line
+                                for train in self.trains:
+                                    if train.line.id == line_to_extend.id:
+                                        train.segment_distances = train._calculate_all_segment_distances()
+                                        train.total_line_distance = sum(train.segment_distances)
+                                print(f"Extended line to {station.type()}")
+                                self.selected_station = station
+                            else:
+                                print("Cannot extend line here")
+                                self.selected_station = None
+                        elif self.check_line(self.selected_station, station):
+                            # Create new line
+                            new_line = Line([self.selected_station, station])
                             self.lines.append(new_line)
                             self.trains.append(Train(line=new_line, tracker=self.tracker))
                             print(f"Created line and train between {self.selected_station.type()} and {station.type()}")
+                            self.selected_station = station
+                        else:
                             self.selected_station = None
-                            break
                     else:
                         self.selected_station = None
                 else:

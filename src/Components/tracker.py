@@ -1,5 +1,9 @@
+from dataclasses import dataclass
+
+
+@dataclass
 class Tracker:
-	def __init__(self):
-		self.total_passengers: int = 0
-		self.passengers_arrived: int = 0
-		self.passengers_lost: int = 0
+    """Tracks game-wide statistics for passengers."""
+    total_passengers: int = 0
+    passengers_arrived: int = 0
+    passengers_lost: int = 0

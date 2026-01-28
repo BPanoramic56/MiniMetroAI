@@ -34,21 +34,77 @@ class Train:
         self.capacity = type.capacity
         self.speed = type.speed
 
+        self.current_station_index: int = 0
         self.distance_traveled: float = 0.0
-        self.total_distance: float = self._calculate_line_distance()
+        self.segment_distances: List[float] = self._calculate_all_segment_distances()
+        self.total_line_distance: float = sum(self.segment_distances)
+        
         self.id: UUID = uuid1()
         self.forward: bool = True
-        self.at_station: bool = False
-        self.station_arrival_time: float = 0.0
-        self.station_parked: Station = None
+        self.at_station: bool = True
+        self.station_arrival_time: float = time.time()
+        self.station_parked: Station = self.line.stations[0]
         
         self.tracker = tracker
     
-    def _calculate_line_distance(self) -> float:
-        """Calculate the total distance between origin and destination."""
-        dx = self.line.destination.x - self.line.origin.x
-        dy = self.line.destination.y - self.line.origin.y
-        return math.sqrt(dx * dx + dy * dy)
+    def _calculate_all_segment_distances(self) -> List[float]:
+        """Calculate distances for all segments in the line."""
+        distances = []
+        for i in range(len(self.line.stations) - 1):
+            origin = self.line.stations[i]
+            destination = self.line.stations[i + 1]
+            dx = destination.x - origin.x
+            dy = destination.y - origin.y
+            distances.append(math.sqrt(dx * dx + dy * dy))
+        
+        # Add closing segment for circular lines
+        if self.line.circular and len(self.line.stations) > 2:
+            origin = self.line.stations[-1]
+            destination = self.line.stations[0]
+            dx = destination.x - origin.x
+            dy = destination.y - origin.y
+            distances.append(math.sqrt(dx * dx + dy * dy))
+        
+        return distances
+    
+    def _get_current_segment_index(self) -> int:
+        """Get which segment the train is currently on based on distance traveled."""
+        if not self.forward:
+            # When going backward, reverse the segment calculation
+            remaining = self.total_line_distance - self.distance_traveled
+            cumulative = 0.0
+            for i in range(len(self.segment_distances)):
+                cumulative += self.segment_distances[i]
+                if remaining <= cumulative:
+                    return i
+            return len(self.segment_distances) - 1
+        
+        cumulative = 0.0
+        for i, segment_dist in enumerate(self.segment_distances):
+            cumulative += segment_dist
+            if self.distance_traveled < cumulative:
+                return i
+        return len(self.segment_distances) - 1
+    
+    def _get_station_at_distance(self, distance: float) -> Tuple[int, bool]:
+        """Check if train is at a station at the given distance. Returns (station_index, at_station)."""
+        cumulative = 0.0
+        tolerance = self.speed * 0.5
+        
+        for i, segment_dist in enumerate(self.segment_distances):
+            # Check if at station i (start of segment)
+            if abs(distance - cumulative) < tolerance:
+                return (i, True)
+            cumulative += segment_dist
+        
+        # Check if at final station
+        if abs(distance - cumulative) < tolerance:
+            if self.line.circular:
+                return (0, True)
+            else:
+                return (len(self.line.stations) - 1, True)
+        
+        return (-1, False)
     
     def update(self) -> None:
         """Update train position along the line."""
@@ -56,30 +112,60 @@ class Train:
             if time.time() - self.station_arrival_time >= TRAIN_DWELL_TIME:
                 self.at_station = False
             else:
-                new_rider_list: List[Rider] = self.riders
-                for rider in self.riders:
-                    if rider.destination_type == self.station_parked.station_type:
-                        new_rider_list.remove(rider)
-                        if self.tracker:
-                            self.tracker.passengers_arrived += 1
-                self.riders = new_rider_list
-                while len(self.riders) < self.capacity and len(self.station_parked.riders) != 0:
+                # Unload passengers at their destination
+                remaining_riders = [rider for rider in self.riders if rider.destination_type != self.station_parked.station_type]
+                unloaded_count = len(self.riders) - len(remaining_riders)
+                self.riders = remaining_riders
+                
+                if self.tracker and unloaded_count > 0:
+                    self.tracker.passengers_arrived += unloaded_count
+                
+                # Load new passengers up to capacity
+                while len(self.riders) < self.capacity and len(self.station_parked.riders) > 0:
                     self.riders.append(self.station_parked.riders.pop(0))
-                    print(f"{len(self.riders)} aboard {self.id}")
+                    print(f"{len(self.riders)} aboard train")
                 return
         
+        # Move the train
         if self.forward:
             self.distance_traveled += self.speed
-            if self.distance_traveled >= self.total_distance:
-                self.distance_traveled = self.total_distance
-                self.forward = False
-                self._arrive_at_station(self.line.destination)
+            
+            # Check for arrival at station
+            station_index, arrived = self._get_station_at_distance(self.distance_traveled)
+            if arrived and station_index != self.current_station_index:
+                self.current_station_index = station_index
+                self._arrive_at_station(self.line.stations[station_index])
+            
+            # Check if reached end of line
+            if self.distance_traveled >= self.total_line_distance:
+                if self.line.circular:
+                    # Loop back to start for circular lines
+                    self.distance_traveled = 0.0
+                    self.current_station_index = 0
+                    self._arrive_at_station(self.line.stations[0])
+                else:
+                    # Reverse direction for non-circular lines
+                    self.distance_traveled = self.total_line_distance
+                    self.forward = False
+                    self.current_station_index = len(self.line.stations) - 1
+                    if not self.at_station:
+                        self._arrive_at_station(self.line.stations[-1])
         else:
             self.distance_traveled -= self.speed
+            
+            # Check for arrival at station
+            station_index, arrived = self._get_station_at_distance(self.distance_traveled)
+            if arrived and station_index != self.current_station_index:
+                self.current_station_index = station_index
+                self._arrive_at_station(self.line.stations[station_index])
+            
+            # Check if reached start of line
             if self.distance_traveled <= 0.0:
                 self.distance_traveled = 0.0
                 self.forward = True
-                self._arrive_at_station(self.line.origin)
+                self.current_station_index = 0
+                if not self.at_station:
+                    self._arrive_at_station(self.line.stations[0])
     
     def _arrive_at_station(self, station) -> None:
         """Handle train arriving at a station (unload/load passengers)."""
@@ -89,13 +175,36 @@ class Train:
         print(f"Train arrived at {station.describe()}")
     
     def get_position(self) -> Tuple[int, int]:
-        """Calculate current position based on distance traveled along the line."""
-        if self.total_distance == 0:
-            return (self.line.origin.x, self.line.origin.y)
+        """Calculate current position based on distance traveled along the entire line."""
+        if self.total_line_distance == 0:
+            return (self.line.stations[0].x, self.line.stations[0].y)
         
-        t = self.distance_traveled / self.total_distance
-        x = int(self.line.origin.x + t * (self.line.destination.x - self.line.origin.x))
-        y = int(self.line.origin.y + t * (self.line.destination.y - self.line.origin.y))
+        # Find which segment we're on
+        current_segment = self._get_current_segment_index()
+        
+        # Calculate distance from start of current segment
+        distance_before_segment = sum(self.segment_distances[:current_segment])
+        distance_in_segment = self.distance_traveled - distance_before_segment
+        
+        # Get origin and destination of current segment
+        if current_segment >= len(self.line.stations) - 1 and self.line.circular:
+            origin = self.line.stations[-1]
+            destination = self.line.stations[0]
+        else:
+            origin = self.line.stations[current_segment]
+            if current_segment + 1 < len(self.line.stations):
+                destination = self.line.stations[current_segment + 1]
+            else:
+                return (origin.x, origin.y)
+        
+        # Interpolate position within segment
+        segment_length = self.segment_distances[current_segment]
+        if segment_length == 0:
+            return (origin.x, origin.y)
+        
+        t = distance_in_segment / segment_length
+        x = int(origin.x + t * (destination.x - origin.x))
+        y = int(origin.y + t * (destination.y - origin.y))
         return (x, y)
     
     def render(self, screen: pygame.Surface) -> None:

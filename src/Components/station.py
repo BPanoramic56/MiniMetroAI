@@ -86,9 +86,7 @@ class Station:
             if self.tracker:
                 self.tracker.total_passengers += 1
         
-        new_rider_list: List[Rider] = []
         for rider in self.riders:
             rider.update()
-            if not rider.abandon:
-                new_rider_list.append(rider)
-        self.riders = new_rider_list
+        
+        self.riders = [rider for rider in self.riders if not rider.abandon]
