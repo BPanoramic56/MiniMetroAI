@@ -4,6 +4,8 @@ from time import time
 from uuid import uuid1, UUID
 from typing import Tuple
 
+import shapes
+
 from typeEnums import StationType
 from tracker import Tracker
 
@@ -26,19 +28,16 @@ class Rider:
     
         self.tracker = tracker
     
-    def render(self, screen: pygame.Surface, x, y):        
-        if self.destination_type == StationType.Circle:
-            pygame.draw.circle(screen, RIDER_COLOR, (x, y), RIDER_SIZE)
-        elif self.destination_type == StationType.Triangle:
-            points = [
-                (x, y - RIDER_SIZE),
-                (x - RIDER_SIZE, y + RIDER_SIZE),
-                (x + RIDER_SIZE, y + RIDER_SIZE)
-            ]
-            pygame.draw.polygon(screen, RIDER_COLOR, points)
-        elif self.destination_type == StationType.Square:
-            rect = pygame.Rect(x - RIDER_SIZE, y - RIDER_SIZE, RIDER_SIZE * 2, RIDER_SIZE * 2)
-            pygame.draw.rect(screen, RIDER_COLOR, rect)
+    def render(self, screen: pygame.Surface, x, y):
+        shapes.CustomShape.render_shape(
+            screen=screen,
+            x=x,
+            y=y,
+            type=self.destination_type,
+            size=RIDER_SIZE,
+            width=2,
+            color=RIDER_COLOR
+        )
     
     def update(self):
         if time() > self.spawn_time + self.patience and not self.abandon:

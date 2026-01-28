@@ -27,7 +27,7 @@ TRAIN_COLOR: Dict[TrainType, Tuple[int, int, int]] = {
 class Train:
     """Represents a train traveling along a line between stations."""
     
-    def __init__(self, line: Line, type: TrainType = TrainType.Regular, tracker: Tracker = None):
+    def __init__(self, line: Line, type: TrainType = TrainType.Express, tracker: Tracker = None):
         self.line: Line = line
         self.riders: List[Rider] = []
         self.type: TrainType = type

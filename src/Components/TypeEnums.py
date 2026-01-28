@@ -2,9 +2,12 @@ from enum import Enum
 
 class StationType(Enum):
     """Types of stations with different shapes."""
-    Circle = 0
-    Triangle = 1
-    Square = 2
+    Circle      = 0
+    Triangle    = 1
+    Square      = 2
+    Cross       = 3
+    Pentagon    = 4
+    Hexagon     = 5
     
 class TrainType(Enum):
     Regular = 0

@@ -33,6 +33,10 @@ if __name__ == "__main__":
                 elif event.key == pygame.K_p:
                     if metro.stations:
                         choice(metro.stations).create_passenger()
+                elif event.key == pygame.K_r:
+                    metro = minimetro.MiniMetro()
+                    for _ in range(START_STATIONS):
+                        metro.create_station()
             elif event.type == pygame.MOUSEBUTTONUP:
                 pos = pygame.mouse.get_pos()
                 metro.check_location(pos)

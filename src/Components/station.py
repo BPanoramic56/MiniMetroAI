@@ -6,6 +6,8 @@ from uuid import uuid1, UUID
 from typing import List, Tuple
 from random import choice
 
+import shapes
+
 from typeEnums import StationType
 from rider import Rider
 from tracker import Tracker
@@ -16,7 +18,8 @@ RIDER_SPAWN_INTERVAL: float = 5.0
 
 # Visual constants
 STATION_SIZE: int = 20
-STATION_COLOR: Tuple[int, int, int] = (150, 150, 150)
+UNSERVICED_COLOR: Tuple[int, int, int] = (190, 150, 150)
+SERVICED_COLOR: Tuple[int, int, int] = (150, 150, 190)
 SELECTED_COLOR: Tuple[int, int, int] = (150, 150, 250)
 
 
@@ -44,20 +47,31 @@ class Station:
     
     def render(self, screen: pygame.Surface, selected: bool = False) -> None:
         """Render the station shape on the given surface."""
-        color = SELECTED_COLOR if selected else STATION_COLOR
+        color = SELECTED_COLOR if selected else (UNSERVICED_COLOR if self.tracker.serviced_stations[self.id] == 0 else SERVICED_COLOR)
+        shapes.CustomShape.render_shape(
+            screen=screen,
+            x=self.x,
+            y=self.y,
+            size=STATION_SIZE,
+            type=self.station_type,
+            width=5,
+            color=color
+        )
         
-        if self.station_type == StationType.Circle:
-            pygame.draw.circle(screen, color, (self.x, self.y), STATION_SIZE)
-        elif self.station_type == StationType.Triangle:
-            points = [
-                (self.x, self.y - STATION_SIZE),
-                (self.x - STATION_SIZE, self.y + STATION_SIZE),
-                (self.x + STATION_SIZE, self.y + STATION_SIZE)
-            ]
-            pygame.draw.polygon(screen, color, points)
-        elif self.station_type == StationType.Square:
-            rect = pygame.Rect(self.x - STATION_SIZE, self.y - STATION_SIZE, STATION_SIZE * 2, STATION_SIZE * 2)
-            pygame.draw.rect(screen, color, rect)
+        # color = SELECTED_COLOR if selected else STATION_COLOR
+        
+        # if self.station_type == StationType.Circle:
+        #     pygame.draw.circle(screen, color, (self.x, self.y), STATION_SIZE)
+        # elif self.station_type == StationType.Triangle:
+        #     points = [
+        #         (self.x, self.y - STATION_SIZE),
+        #         (self.x - STATION_SIZE, self.y + STATION_SIZE),
+        #         (self.x + STATION_SIZE, self.y + STATION_SIZE)
+        #     ]
+        #     pygame.draw.polygon(screen, color, points)
+        # elif self.station_type == StationType.Square:
+        #     rect = pygame.Rect(self.x - STATION_SIZE, self.y - STATION_SIZE, STATION_SIZE * 2, STATION_SIZE * 2)
+        #     pygame.draw.rect(screen, color, rect)
     
         rider_y: int = self.y - 20
         rider_x: int = self.x + 30
@@ -82,7 +96,6 @@ class Station:
         self.riders = [rider for rider in self.riders if not rider.abandon]
         
     def create_passenger(self) -> None:
-        print(self.tracker.station_types)
         destination_type: StationType = choice(list(self.tracker.station_types))
             
         # Does not add the rider to the station if it's destination is already this station. This adds a little variability and randomness to the time in which drivers are created

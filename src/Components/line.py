@@ -1,7 +1,7 @@
 import pygame
 
 from random import randint
-from typing import List, Tuple, Set
+from typing import List, Tuple, Set, Optional
 from uuid import uuid1, UUID
 
 from typeEnums import StationType
@@ -13,21 +13,24 @@ LINE_COLORS: List[Tuple[int, int, int]] = [
     (150, 255, 150),
     (150, 150, 255)
 ]
+
+SELECTED_COLOR: Tuple[int, int, int] = (150, 150, 250)
 LINE_WIDTH: int = 10
 
 
 class Line:
     """Represents a metro line connecting multiple stations."""
     
-    def __init__(self, stations: List[Station]):
+    def __init__(self, stations: List[Station], color: Optional[Tuple[int, int, int]] = None):
         if len(stations) < 2:
             raise ValueError("Line must connect at least 2 stations")
         
         self.stations: List[Station] = stations
-        self.color: Tuple[int, int, int] = LINE_COLORS[randint(0, len(LINE_COLORS) - 1)]
+        self.color: Tuple[int, int, int] = color if color else LINE_COLORS[randint(0, len(LINE_COLORS) - 1)]
         self.width: int = LINE_WIDTH
         self.id: UUID = uuid1()
         self.circular: bool = False
+        self.selected: bool = False
     
     @property
     def origin(self) -> Station:
@@ -68,13 +71,15 @@ class Line:
         """Make the line circular (trains loop back to start). Only works if 3+ stations."""
         if len(self.stations) >= 3:
             self.circular = True
-        
+    
     def render(self, screen: pygame.Surface) -> None:
         """Render the line segments connecting all stations."""
+        color = SELECTED_COLOR if self.selected else self.color
+        
         for i in range(len(self.stations) - 1):
             pygame.draw.line(
                 screen,
-                self.color,
+                color,
                 (self.stations[i].x, self.stations[i].y),
                 (self.stations[i + 1].x, self.stations[i + 1].y),
                 self.width
@@ -83,7 +88,7 @@ class Line:
         if self.circular and len(self.stations) > 2:
             pygame.draw.line(
                 screen,
-                self.color,
+                color,
                 (self.stations[-1].x, self.stations[-1].y),
                 (self.stations[0].x, self.stations[0].y),
                 self.width
