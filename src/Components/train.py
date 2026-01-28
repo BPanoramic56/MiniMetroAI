@@ -13,7 +13,7 @@ from typeEnums import TrainType
 from tracker import Tracker
 
 # Design constants
-TRAIN_DWELL_TIME: float = 2.0
+TRAIN_DWELL_TIME: float = 0.5
 
 # Visual constants
 TRAIN_SIZE: int = 12
@@ -69,16 +69,6 @@ class Train:
     
     def _get_current_segment_index(self) -> int:
         """Get which segment the train is currently on based on distance traveled."""
-        if not self.forward:
-            # When going backward, reverse the segment calculation
-            remaining = self.total_line_distance - self.distance_traveled
-            cumulative = 0.0
-            for i in range(len(self.segment_distances)):
-                cumulative += self.segment_distances[i]
-                if remaining <= cumulative:
-                    return i
-            return len(self.segment_distances) - 1
-        
         cumulative = 0.0
         for i, segment_dist in enumerate(self.segment_distances):
             cumulative += segment_dist
@@ -109,7 +99,7 @@ class Train:
     def update(self) -> None:
         """Update train position along the line."""
         if self.at_station:
-            if time.time() - self.station_arrival_time >= TRAIN_DWELL_TIME:
+            if time.time() - self.station_arrival_time - (min(len(self.station_parked.riders), self.capacity) * 0.5) >= TRAIN_DWELL_TIME:
                 self.at_station = False
             else:
                 # Unload passengers at their destination
@@ -120,10 +110,18 @@ class Train:
                 if self.tracker and unloaded_count > 0:
                     self.tracker.passengers_arrived += unloaded_count
                 
-                # Load new passengers up to capacity
-                while len(self.riders) < self.capacity and len(self.station_parked.riders) > 0:
-                    self.riders.append(self.station_parked.riders.pop(0))
-                    print(f"{len(self.riders)} aboard train")
+                # Load new passengers up to capacity (only those we can deliver)
+                riders_checked = 0
+                while len(self.riders) < self.capacity and riders_checked < len(self.station_parked.riders):
+                    rider: Rider = self.station_parked.riders[riders_checked]
+                    
+                    if rider.destination_type in self.line.get_station_types():
+                        # Take this rider
+                        self.riders.append(self.station_parked.riders.pop(riders_checked))
+                        print(f"{len(self.riders)} aboard train")
+                    else:
+                        # Skip this rider, check next one
+                        riders_checked += 1
                 return
         
         # Move the train
@@ -214,7 +212,6 @@ class Train:
         pygame.draw.rect(screen, TRAIN_COLOR[self.type], rect)
          
         rider_x = x + 20
-        
         for rider in self.riders:
             rider.render(screen, rider_x, y - 18)
             rider_x += 15

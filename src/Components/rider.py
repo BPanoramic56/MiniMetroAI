@@ -8,7 +8,7 @@ from typeEnums import StationType
 from tracker import Tracker
 
 # Design constants
-RIDER_PATIENCE: float = 2.0
+RIDER_PATIENCE: float = 30.0
 RIDER_SIZE: int = 5
 RIDER_COLOR: Tuple[int, int, int] = (200, 100, 100)
 

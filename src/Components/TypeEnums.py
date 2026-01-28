@@ -14,9 +14,9 @@ class TrainType(Enum):
     @property
     def capacity(self) -> int:
         return {
-            TrainType.Regular: 100,
-            TrainType.Express: 200,
-            TrainType.HighCapacity: 400,
+            TrainType.Regular: 5,
+            TrainType.Express: 5,
+            TrainType.HighCapacity: 10,
         }[self]
     
     @property

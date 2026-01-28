@@ -4,6 +4,7 @@ import time
 from random import randint
 from uuid import uuid1, UUID
 from typing import List, Tuple
+from random import choice
 
 from typeEnums import StationType
 from rider import Rider
@@ -22,10 +23,10 @@ SELECTED_COLOR: Tuple[int, int, int] = (150, 150, 250)
 class Station:
     """Represents a metro station with a shape and position."""
     
-    def __init__(self, x: int, y: int, tracker: Tracker = None):
-        self.station_type: StationType = StationType(randint(0, len(StationType) - 1))
+    def __init__(self, x: int, y: int, type: StationType, tracker: Tracker = None):
         self.x: int = x
         self.y: int = y
+        self.station_type: StationType = type
         self.id: UUID = uuid1()
         self.limit: int = STATION_LIMIT
         self.last_spawn_time: float = time.time()
@@ -74,19 +75,22 @@ class Station:
     def update(self) -> None:
         """Update station state (spawn riders)."""
         if self.should_create_rider() and len(self.riders) < self.limit:
-            destination_type = StationType(randint(0, len(StationType) - 1))
-             
-            # Does not add the rider to the station if it's destination is already this station. This adds a little variability and randomness to the time in which drivers are created
-            if destination_type == self.station_type:
-                return
-            
-            new_rider = Rider(self.id, destination_type, tracker=self.tracker)
-            self.riders.append(new_rider)
-            print(f"New rider at {self.describe()}: wants {destination_type.name} ({len(self.riders)} waiting)")
-            if self.tracker:
-                self.tracker.total_passengers += 1
-        
+            self.create_passenger()
         for rider in self.riders:
             rider.update()
         
         self.riders = [rider for rider in self.riders if not rider.abandon]
+        
+    def create_passenger(self) -> None:
+        print(self.tracker.station_types)
+        destination_type: StationType = choice(list(self.tracker.station_types))
+            
+        # Does not add the rider to the station if it's destination is already this station. This adds a little variability and randomness to the time in which drivers are created
+        if destination_type == self.station_type:
+            return
+        
+        new_rider = Rider(self.id, destination_type, tracker=self.tracker)
+        self.riders.append(new_rider)
+        print(f"New rider at {self.describe()}: wants {destination_type.name} ({len(self.riders)} waiting)")
+        if self.tracker:
+            self.tracker.total_passengers += 1

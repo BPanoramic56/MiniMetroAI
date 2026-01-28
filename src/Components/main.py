@@ -1,6 +1,8 @@
 import pygame
 import random
 
+from random import choice
+
 import minimetro
 
 # Design constants
@@ -21,13 +23,16 @@ if __name__ == "__main__":
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_s:
                     metro.create_station()
-                elif event.key == pygame.K_p:
+                elif event.key == pygame.K_ESCAPE:
                     paused = not paused
                 elif event.key == pygame.K_t:
                     if metro.lines:
                         line = random.choice(metro.lines)
                         metro.trains.append(minimetro.Train(line))
                         print(f"Created train on line (Total: {len(metro.trains)})")
+                elif event.key == pygame.K_p:
+                    if metro.stations:
+                        choice(metro.stations).create_passenger()
             elif event.type == pygame.MOUSEBUTTONUP:
                 pos = pygame.mouse.get_pos()
                 metro.check_location(pos)

@@ -9,6 +9,7 @@ from station import Station
 from line import Line
 from train import Train
 from tracker import Tracker
+from typeEnums import StationType
 
 # Fixed constants
 WIDTH: int      = 800
@@ -90,7 +91,7 @@ class MiniMetro:
             True,
             COLORS["UI_TEXT_COLOR"]
         )
-        self.screen.blit(info_text, (250, HEIGHT - UI_HEIGHT + 18))
+        self.screen.blit(info_text, (300, HEIGHT - UI_HEIGHT + 18))
         
         pygame.display.flip()
     
@@ -121,8 +122,12 @@ class MiniMetro:
     def create_station(self) -> None:
         """Create a new station at a valid location."""
         x, y = self.create_location()
-        station = Station(x, y, self.tracker)
+        type: StationType = StationType(randint(0, len(StationType) - 1))
+        station = Station(x, y, type, self.tracker)
+        print(type)
+        self.tracker.station_types.add(type)
         self.stations.append(station)
+        
         self.last_spawn_time = time.time()
         print(f"Created ({len(self.stations)}): {station.describe()}")
     
