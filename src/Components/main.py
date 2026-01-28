@@ -13,6 +13,7 @@ if __name__ == "__main__":
         metro.create_station()
     
     running: bool = True
+    paused: bool = False
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -20,6 +21,8 @@ if __name__ == "__main__":
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_s:
                     metro.create_station()
+                elif event.key == pygame.K_p:
+                    paused = not paused
                 elif event.key == pygame.K_t:
                     if metro.lines:
                         line = random.choice(metro.lines)
@@ -29,8 +32,9 @@ if __name__ == "__main__":
                 pos = pygame.mouse.get_pos()
                 metro.check_location(pos)
         
-        metro.update()
-        metro.render()
-        metro.clock.tick(minimetro.FPS)
+        if not paused:
+            metro.update()
+            metro.render()
+            metro.clock.tick(minimetro.FPS)
     
     pygame.quit()

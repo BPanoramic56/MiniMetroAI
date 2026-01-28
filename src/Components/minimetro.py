@@ -7,6 +7,7 @@ from typing import List, Optional, Tuple, Dict
 from station import Station
 from line import Line
 from train import Train
+from tracker import Tracker
 
 # Fixed constants
 WIDTH: int      = 800
@@ -47,6 +48,9 @@ class MiniMetro:
         
         self.lines: List[Line] = []
         self.trains: List[Train] = []
+
+        # Tracking info
+        self.tracker = Tracker() # Decided to offload this to another class to reduce the amount of variables in here
     
     def get_elapsed_time(self) -> float:
         """Get time elapsed since game start in seconds."""
@@ -80,6 +84,13 @@ class MiniMetro:
         )
         self.screen.blit(info_text, (20, HEIGHT - UI_HEIGHT + 18))
         
+        info_text = self.font.render(
+            f"Passengers: {self.tracker.total_passengers}  |  Arrived: {self.tracker.passengers_arrived} | Lost: {self.tracker.passengers_lost}",
+            True,
+            COLORS["UI_TEXT_COLOR"]
+        )
+        self.screen.blit(info_text, (250, HEIGHT - UI_HEIGHT + 18))
+        
         pygame.display.flip()
     
     def is_valid_location(self, x: int, y: int) -> bool:
@@ -109,7 +120,7 @@ class MiniMetro:
     def create_station(self) -> None:
         """Create a new station at a valid location."""
         x, y = self.create_location()
-        station = Station(x, y)
+        station = Station(x, y, self.tracker)
         self.stations.append(station)
         self.last_spawn_time = time.time()
         print(f"Created ({len(self.stations)}): {station.describe()}")
@@ -139,14 +150,17 @@ class MiniMetro:
             if x + spacing >= station.x and x - spacing <= station.x and \
                y + spacing >= station.y and y - spacing <= station.y:
                 
-                if self.selected_station and station.id != self.selected_station.id:
-                    if self.check_line(self.selected_station, station):
-                        new_line = Line(self.selected_station, station)
-                        self.lines.append(new_line)
-                        self.trains.append(Train(new_line))
-                        print(f"Created line and train between {self.selected_station.type()} and {station.type()}")
+                if self.selected_station:
+                    if station.id != self.selected_station.id:
+                        if self.check_line(self.selected_station, station):
+                            new_line = Line(self.selected_station, station)
+                            self.lines.append(new_line)
+                            self.trains.append(Train(line=new_line, tracker=self.tracker))
+                            print(f"Created line and train between {self.selected_station.type()} and {station.type()}")
+                            self.selected_station = None
+                            break
+                    else:
                         self.selected_station = None
-                        break
                 else:
                     print(f"Station clicked: {station.describe()}")
                     self.selected_station = station

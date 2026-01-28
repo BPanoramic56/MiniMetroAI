@@ -3,7 +3,7 @@ import pygame
 from random import randint
 from typing import List, Tuple
 
-from TypeEnums import StationType
+from typeEnums import StationType
 from station import Station
 
 # Visual constants
