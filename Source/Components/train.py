@@ -206,6 +206,46 @@ class Train:
         y = int(origin.y + t * (destination.y - origin.y))
         return (x, y)
     
+    def get_direction_angle(self) -> float:
+        """Calculate the angle the train is pointing (in degrees)."""
+        if self.total_line_distance == 0:
+            return 0.0
+        
+        # Find which segment we're on
+        current_segment = self._get_current_segment_index()
+        
+        # Get origin and destination of current segment
+        if current_segment >= len(self.line.stations) - 1 and self.line.circular:
+            origin = self.line.stations[-1]
+            destination = self.line.stations[0]
+        else:
+            origin = self.line.stations[current_segment]
+            if current_segment + 1 < len(self.line.stations):
+                destination = self.line.stations[current_segment + 1]
+            else:
+                # At the end, use previous segment direction
+                if current_segment > 0:
+                    origin = self.line.stations[current_segment - 1]
+                    destination = self.line.stations[current_segment]
+                else:
+                    return 0.0
+        
+        # Calculate angle from origin to destination
+        dx = destination.x - origin.x
+        dy = destination.y - origin.y
+        
+        # atan2 returns angle in radians, convert to degrees
+        # Note: pygame uses (0, 0) at top-left, so y increases downward
+        angle = math.degrees(math.atan2(dy, dx))
+        
+        # If going backward, flip the angle 180 degrees
+        if not self.forward:
+            angle += 180
+            
+        angle += 90
+        
+        return angle
+    
     def render(self, screen: pygame.Surface) -> None:
         """Render the train at its current position."""
         x, y = self.get_position()
@@ -213,10 +253,14 @@ class Train:
         # Try to render sprite first
         sprite = resources.get_train_sprite(self.type, TRAIN_SIZE)
         if sprite and resources.use_sprites:
-            rect = sprite.get_rect(center=(x, y))
-            screen.blit(sprite, rect)
+            # Get direction angle and rotate sprite
+            angle = self.get_direction_angle()
+            # Negative angle because pygame rotates counter-clockwise but our angle is clockwise
+            rotated_sprite = pygame.transform.rotate(sprite, -angle)
+            rect = rotated_sprite.get_rect(center=(x, y))
+            screen.blit(rotated_sprite, rect)
         else:
-            # Fallback to colored rectangle
+            # Fallback to colored rectangle (doesn't rotate)
             rect = pygame.Rect(x - TRAIN_SIZE, y - TRAIN_SIZE, TRAIN_SIZE * 2, TRAIN_SIZE * 2)
             pygame.draw.rect(screen, TRAIN_COLOR[self.type], rect)
          

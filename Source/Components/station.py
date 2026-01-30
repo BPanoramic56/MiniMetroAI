@@ -55,7 +55,6 @@ class Station:
         if sprite and resources.use_sprites:
             # Tint the sprite with the color
             tinted_sprite = sprite.copy()
-            tinted_sprite.fill(color + (0,), special_flags=pygame.BLEND_RGBA_MULT)
             rect = tinted_sprite.get_rect(center=(self.x, self.y))
             screen.blit(tinted_sprite, rect)
         else:

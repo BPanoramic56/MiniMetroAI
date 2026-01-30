@@ -48,9 +48,9 @@ class ResourceManager:
         self.rider_sprites: Dict[StationType, pygame.Surface] = {}
         self.background: Optional[pygame.Surface] = None
         self.use_sprites: bool = False
+        self._sprites_loaded: bool = False
         
         self._ensure_directories()
-        self._load_sprites()
     
     def _ensure_directories(self) -> None:
         """Create asset directories if they don't exist."""
@@ -58,40 +58,59 @@ class ResourceManager:
         BACKGROUNDS_DIR.mkdir(parents=True, exist_ok=True)
     
     def _load_sprites(self) -> None:
-        """Load all sprite images from the assets directory."""
-        # Load station sprites
-        for station_type, filename in STATION_SPRITES.items():
-            path = SPRITES_DIR / filename
-            if path.exists():
-                self.station_sprites[station_type] = pygame.image.load(str(path)).convert_alpha()
+        """Load all sprite images from the assets directory. Called lazily after pygame init."""
+        if self._sprites_loaded:
+            return
         
-        # Load train sprites
-        for train_type, filename in TRAIN_SPRITES.items():
-            path = SPRITES_DIR / filename
-            if path.exists():
-                self.train_sprites[train_type] = pygame.image.load(str(path)).convert_alpha()
-        
-        # Load rider sprites
-        for rider_type, filename in RIDER_SPRITES.items():
-            path = SPRITES_DIR / filename
-            if path.exists():
-                self.rider_sprites[rider_type] = pygame.image.load(str(path)).convert_alpha()
-        
-        # Check if we have enough sprites to use sprite mode
-        self.use_sprites = (len(self.station_sprites) > 0 or 
-                           len(self.train_sprites) > 0 or 
-                           len(self.rider_sprites) > 0)
+        try:
+            # Load station sprites
+            for station_type, filename in STATION_SPRITES.items():
+                path = SPRITES_DIR / filename
+                if path.exists():
+                    self.station_sprites[station_type] = pygame.image.load(str(path)).convert_alpha()
+            
+            # Load train sprites
+            for train_type, filename in TRAIN_SPRITES.items():
+                path = SPRITES_DIR / filename
+                if path.exists():
+                    self.train_sprites[train_type] = pygame.image.load(str(path)).convert_alpha()
+            
+            # Load rider sprites
+            for rider_type, filename in RIDER_SPRITES.items():
+                path = SPRITES_DIR / filename
+                if path.exists():
+                    self.rider_sprites[rider_type] = pygame.image.load(str(path)).convert_alpha()
+            
+            # Check if we have enough sprites to use sprite mode
+            self.use_sprites = (len(self.station_sprites) > 0 or 
+                               len(self.train_sprites) > 0 or 
+                               len(self.rider_sprites) > 0)
+            
+            self._sprites_loaded = True
+            
+            if self.use_sprites:
+                print(f"Loaded {len(self.station_sprites)} station sprites, {len(self.train_sprites)} train sprites, {len(self.rider_sprites)} rider sprites")
+        except Exception as e:
+            print(f"Error loading sprites: {e}")
+            self.use_sprites = False
     
     def load_background(self, filename: str) -> bool:
         """Load a background image."""
         path = BACKGROUNDS_DIR / filename
         if path.exists():
-            self.background = pygame.image.load(str(path)).convert()
-            return True
+            try:
+                self.background = pygame.image.load(str(path)).convert()
+                print(f"Loaded background: {filename}")
+                return True
+            except Exception as e:
+                print(f"Error loading background: {e}")
         return False
     
     def get_station_sprite(self, station_type: StationType, size: int) -> Optional[pygame.Surface]:
         """Get scaled station sprite for given type."""
+        if not self._sprites_loaded:
+            self._load_sprites()
+        
         if station_type in self.station_sprites:
             sprite = self.station_sprites[station_type]
             return pygame.transform.scale(sprite, (size * 2, size * 2))
@@ -99,6 +118,9 @@ class ResourceManager:
     
     def get_train_sprite(self, train_type: TrainType, size: int) -> Optional[pygame.Surface]:
         """Get scaled train sprite for given type."""
+        if not self._sprites_loaded:
+            self._load_sprites()
+        
         if train_type in self.train_sprites:
             sprite = self.train_sprites[train_type]
             return pygame.transform.scale(sprite, (size * 2, size * 2))
@@ -106,6 +128,9 @@ class ResourceManager:
     
     def get_rider_sprite(self, destination_type: StationType, size: int) -> Optional[pygame.Surface]:
         """Get scaled rider sprite for given destination type."""
+        if not self._sprites_loaded:
+            self._load_sprites()
+        
         if destination_type in self.rider_sprites:
             sprite = self.rider_sprites[destination_type]
             return pygame.transform.scale(sprite, (size * 2, size * 2))
