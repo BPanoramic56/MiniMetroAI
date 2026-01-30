@@ -19,7 +19,7 @@ class TrainType(Enum):
         return {
             TrainType.Regular: 5,
             TrainType.Express: 5,
-            TrainType.HighCapacity: 10,
+            TrainType.HighCapacity: 8,
         }[self]
     
     @property
@@ -27,7 +27,7 @@ class TrainType(Enum):
         return {
             TrainType.Regular: 4.0,
             TrainType.Express: 6.4,
-            TrainType.HighCapacity: 2.0,
+            TrainType.HighCapacity: 3.2,
         }[self]
     
 # TODO: Possible later implementations
@@ -35,3 +35,8 @@ class TrainType(Enum):
 #     Regular = 1
 #     Express = 2
 #     HighCapacity = 3
+
+class GameSpeed(Enum):
+    Regular = 1
+    TwoStep = 2
+    FourStep = 4

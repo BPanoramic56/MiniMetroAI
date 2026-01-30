@@ -1,14 +1,17 @@
 import pygame
 import random
 
-from random import choice
+from random import choice, randint
 
 import minimetro
+
+from typeEnums import TrainType, GameSpeed
 
 # Design constants
 START_STATIONS: int = 3
 
 metro: minimetro.MiniMetro = minimetro.MiniMetro()
+# speed: GameSpeed = GameSpeed.Regular
 
 if __name__ == "__main__":
     for _ in range(START_STATIONS):
@@ -16,6 +19,7 @@ if __name__ == "__main__":
     
     running: bool = True
     paused: bool = False
+    
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -28,7 +32,7 @@ if __name__ == "__main__":
                 elif event.key == pygame.K_t:
                     if metro.lines:
                         line = random.choice(metro.lines)
-                        metro.trains.append(minimetro.Train(line))
+                        metro.trains.append(minimetro.Train(line, TrainType(randint(0, len(TrainType) - 1))))
                         print(f"Created train on line (Total: {len(metro.trains)})")
                 elif event.key == pygame.K_p:
                     if metro.stations:
@@ -37,6 +41,17 @@ if __name__ == "__main__":
                     metro = minimetro.MiniMetro()
                     for _ in range(START_STATIONS):
                         metro.create_station()
+                # elif event.key == pygame.K_SPACE:
+                #     if speed == GameSpeed.Regular:
+                #         metro.station_spawn_interval *= 0.5
+                #         speed = GameSpeed.TwoStep
+                #     elif speed == GameSpeed.TwoStep:
+                #         metro.station_spawn_interval *= 0.5
+                #         speed = GameSpeed.FourStep
+                #     elif speed == GameSpeed.FourStep:
+                #         metro.station_spawn_interval *= 4
+                #         speed = GameSpeed.Regular
+                        
             elif event.type == pygame.MOUSEBUTTONUP:
                 pos = pygame.mouse.get_pos()
                 metro.check_location(pos)

@@ -59,6 +59,8 @@ class MiniMetro:
         self.selected_station: Optional[Station] = None
         self.selected_line: Optional[Line] = None
         
+        self.station_spawn_interval: float = STATION_SPAWN_INTERVAL
+        
         self.lines: List[Line] = []
         self.trains: List[Train] = []
 
@@ -76,7 +78,7 @@ class MiniMetro:
     
     def should_auto_spawn(self) -> bool:
         """Check if enough time has passed for automatic station spawn."""
-        return time.time() - self.last_spawn_time >= STATION_SPAWN_INTERVAL
+        return time.time() - self.last_spawn_time >= self.station_spawn_interval
     
     def render(self) -> None:
         """Render all game elements to screen."""
