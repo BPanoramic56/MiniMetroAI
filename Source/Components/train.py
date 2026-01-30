@@ -11,6 +11,7 @@ from rider import Rider
 from station import Station
 from typeEnums import TrainType
 from tracker import Tracker
+from resourceManager import resources
 
 # Design constants
 TRAIN_DWELL_TIME: float = 0.5
@@ -208,8 +209,16 @@ class Train:
     def render(self, screen: pygame.Surface) -> None:
         """Render the train at its current position."""
         x, y = self.get_position()
-        rect = pygame.Rect(x - TRAIN_SIZE, y - TRAIN_SIZE, TRAIN_SIZE * 2, TRAIN_SIZE * 2)
-        pygame.draw.rect(screen, TRAIN_COLOR[self.type], rect)
+        
+        # Try to render sprite first
+        sprite = resources.get_train_sprite(self.type, TRAIN_SIZE)
+        if sprite and resources.use_sprites:
+            rect = sprite.get_rect(center=(x, y))
+            screen.blit(sprite, rect)
+        else:
+            # Fallback to colored rectangle
+            rect = pygame.Rect(x - TRAIN_SIZE, y - TRAIN_SIZE, TRAIN_SIZE * 2, TRAIN_SIZE * 2)
+            pygame.draw.rect(screen, TRAIN_COLOR[self.type], rect)
          
         rider_x = x + 20
         for rider in self.riders:

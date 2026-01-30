@@ -1,0 +1,98 @@
+# Assets Guide
+
+This game supports custom sprites and backgrounds to enhance visuals.
+
+## Directory Structure
+
+```
+assets/
+├── sprites/          # Station, train, and rider sprites
+└── backgrounds/      # Background images
+```
+
+## Adding Sprites
+
+### Station Sprites
+Place PNG images in `assets/sprites/` with these names:
+- `station_circle.png` - Circle station
+- `station_triangle.png` - Triangle station
+- `station_square.png` - Square station
+- `station_cross.png` - Cross station
+- `station_pentagon.png` - Pentagon station
+- `station_hexagon.png` - Hexagon station
+
+**Recommended size:** 40x40 pixels (will be scaled automatically)
+
+### Train Sprites
+Place PNG images in `assets/sprites/` with these names:
+- `train_regular.png` - Regular train
+- `train_express.png` - Express train
+- `train_highcap.png` - High capacity train
+
+**Recommended size:** 24x24 pixels (will be scaled automatically)
+
+### Rider Sprites
+Place PNG images in `assets/sprites/` with these names:
+- `rider_circle.png` - Rider going to circle station
+- `rider_triangle.png` - Rider going to triangle station
+- `rider_square.png` - Rider going to square station
+- `rider_cross.png` - Rider going to cross station
+- `rider_pentagon.png` - Rider going to pentagon station
+- `rider_hexagon.png` - Rider going to hexagon station
+
+**Recommended size:** 10x10 pixels (will be scaled automatically)
+
+## Adding Background
+
+Place any image in `assets/backgrounds/` and load it programmatically:
+
+```python
+from resources import resources
+
+# In your main.py or minimetro.py initialization
+resources.load_background("your_background.png")
+```
+
+**Recommended size:** 800x800 pixels (matches game window)
+
+## Fallback Behavior
+
+If sprites are not found, the game will automatically fall back to geometric shapes:
+- Stations: Colored geometric shapes (circle, triangle, square, etc.)
+- Trains: Colored rectangles
+- Riders: Small geometric shapes matching their destination
+- Background: Solid color (#0E0E0E)
+
+## Supported Formats
+
+- **Images:** PNG (recommended), JPG, GIF
+- **Transparency:** PNG with alpha channel supported
+- **Color modes:** RGB, RGBA
+
+## Tips
+
+1. **Use transparent PNGs** for stations and trains to look better over backgrounds
+2. **Keep file sizes small** (<100KB per sprite) for better performance
+3. **Use consistent art style** across all sprites
+4. **Test with and without sprites** to ensure fallback works
+
+## Example Workflow
+
+1. Create your sprites in your favorite image editor (GIMP, Photoshop, Aseprite, etc.)
+2. Export as PNG with transparency
+3. Save to appropriate `assets/sprites/` folder with correct naming
+4. Run the game - sprites will load automatically!
+
+## Creating Simple Sprites
+
+Quick start using Python/PIL:
+
+```python
+from PIL import Image, ImageDraw
+
+# Create a simple circle station
+img = Image.new('RGBA', (40, 40), (0, 0, 0, 0))
+draw = ImageDraw.Draw(img)
+draw.ellipse([5, 5, 35, 35], fill=(150, 150, 190), outline=(100, 100, 140), width=2)
+img.save('assets/sprites/station_circle.png')
+```

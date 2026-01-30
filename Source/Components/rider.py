@@ -5,6 +5,7 @@ from uuid import uuid1, UUID
 from typing import Tuple
 
 import shapes
+from resourceManager import resources
 
 from typeEnums import StationType
 from tracker import Tracker
@@ -29,15 +30,22 @@ class Rider:
         self.tracker = tracker
     
     def render(self, screen: pygame.Surface, x, y):
-        shapes.CustomShape.render_shape(
-            screen=screen,
-            x=x,
-            y=y,
-            type=self.destination_type,
-            size=RIDER_SIZE,
-            width=2,
-            color=RIDER_COLOR
-        )
+        # Try to render sprite first
+        sprite = resources.get_rider_sprite(self.destination_type, RIDER_SIZE)
+        if sprite and resources.use_sprites:
+            rect = sprite.get_rect(center=(x, y))
+            screen.blit(sprite, rect)
+        else:
+            # Fallback to geometric shapes
+            shapes.CustomShape.render_shape(
+                screen=screen,
+                x=x,
+                y=y,
+                type=self.destination_type,
+                size=RIDER_SIZE,
+                width=2,
+                color=RIDER_COLOR
+            )
     
     def update(self):
         if time() > self.spawn_time + self.patience and not self.abandon:

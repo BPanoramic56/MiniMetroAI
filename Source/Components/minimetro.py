@@ -12,6 +12,7 @@ from line import Line
 from train import Train
 from tracker import Tracker
 from typeEnums import StationType
+from resourceManager import resources
 
 # Fixed constants
 WIDTH: int      = 800
@@ -82,7 +83,12 @@ class MiniMetro:
     
     def render(self) -> None:
         """Render all game elements to screen."""
-        self.screen.fill(COLORS["BG_COLOR"])
+        # Render background if available, otherwise fill with color
+        background = resources.get_background((WIDTH, HEIGHT))
+        if background:
+            self.screen.blit(background, (0, 0))
+        else:
+            self.screen.fill(COLORS["BG_COLOR"])
         
         # In order of background-to-foreground
         for line in self.lines:

@@ -7,6 +7,7 @@ from typing import List, Tuple
 from random import choice
 
 import shapes
+from resourceManager import resources
 
 from typeEnums import StationType
 from rider import Rider
@@ -48,30 +49,26 @@ class Station:
     def render(self, screen: pygame.Surface, selected: bool = False) -> None:
         """Render the station shape on the given surface."""
         color = SELECTED_COLOR if selected else (UNSERVICED_COLOR if self.tracker.serviced_stations[self.id] == 0 else SERVICED_COLOR)
-        shapes.CustomShape.render_shape(
-            screen=screen,
-            x=self.x,
-            y=self.y,
-            size=STATION_SIZE,
-            type=self.station_type,
-            width=5,
-            color=color
-        )
         
-        # color = SELECTED_COLOR if selected else STATION_COLOR
-        
-        # if self.station_type == StationType.Circle:
-        #     pygame.draw.circle(screen, color, (self.x, self.y), STATION_SIZE)
-        # elif self.station_type == StationType.Triangle:
-        #     points = [
-        #         (self.x, self.y - STATION_SIZE),
-        #         (self.x - STATION_SIZE, self.y + STATION_SIZE),
-        #         (self.x + STATION_SIZE, self.y + STATION_SIZE)
-        #     ]
-        #     pygame.draw.polygon(screen, color, points)
-        # elif self.station_type == StationType.Square:
-        #     rect = pygame.Rect(self.x - STATION_SIZE, self.y - STATION_SIZE, STATION_SIZE * 2, STATION_SIZE * 2)
-        #     pygame.draw.rect(screen, color, rect)
+        # Try to render sprite first
+        sprite = resources.get_station_sprite(self.station_type, STATION_SIZE)
+        if sprite and resources.use_sprites:
+            # Tint the sprite with the color
+            tinted_sprite = sprite.copy()
+            tinted_sprite.fill(color + (0,), special_flags=pygame.BLEND_RGBA_MULT)
+            rect = tinted_sprite.get_rect(center=(self.x, self.y))
+            screen.blit(tinted_sprite, rect)
+        else:
+            # Fallback to geometric shapes
+            shapes.CustomShape.render_shape(
+                screen=screen,
+                x=self.x,
+                y=self.y,
+                size=STATION_SIZE,
+                type=self.station_type,
+                width=5,
+                color=color
+            )
     
         rider_y: int = self.y - 20
         rider_x: int = self.x + 30
