@@ -19,22 +19,24 @@ class TrainType(Enum):
         return {
             TrainType.Regular: 5,
             TrainType.Express: 5,
-            TrainType.HighCapacity: 8,
+            TrainType.HighCapacity: 10,
         }[self]
     
     @property
     def speed(self) -> float:
         return {
             TrainType.Regular: 4.0,
-            TrainType.Express: 50.0, # Very high, but the acceleration makes it fair
-            TrainType.HighCapacity: 3.2,
+            TrainType.Express: 8.0, 
+            TrainType.HighCapacity: 3.0,
         }[self]
-    
-# TODO: Possible later implementations
-# class LineType(Enum):
-#     Regular = 1
-#     Express = 2
-#     HighCapacity = 3
+        
+    @property
+    def acceleration(self) -> float:
+        return {
+            TrainType.Regular: 0.025,
+            TrainType.Express: 0.05, # Very high, but the acceleration makes it fair
+            TrainType.HighCapacity: 0.025,
+        }[self]
 
 class GameSpeed(Enum):
     Regular = 1

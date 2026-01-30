@@ -15,7 +15,6 @@ from resourceManager import resources
 
 # Design constants
 TRAIN_DWELL_TIME: float = 0.5
-TRAIN_ACCELERATION = 0.025
 
 # Visual constants
 TRAIN_SIZE: int = 12
@@ -24,7 +23,6 @@ TRAIN_COLOR: Dict[TrainType, Tuple[int, int, int]] = {
 	TrainType.Express: (67, 67, 113),
 	TrainType.HighCapacity: (90, 24, 7)
 }
-
 
 class Train:
     """Represents a train traveling along a line between stations."""
@@ -36,7 +34,7 @@ class Train:
         self.capacity: int = type.capacity
         self.speed: float = 0
         self.max_speed: float = type.speed
-        self.acceleration: float = TRAIN_ACCELERATION
+        self.acceleration: float = type.acceleration
 
         self.current_station_index: int = 0
         self.distance_traveled: float = 0.0

@@ -11,6 +11,7 @@ from station import Station
 from line import Line
 from train import Train
 from tracker import Tracker
+from grapher import Grapher
 from typeEnums import StationType
 from resourceManager import resources
 
@@ -79,6 +80,7 @@ class MiniMetro:
         self.train_quantity = 0
         
         self.tracker = Tracker()
+        self.grapher = Grapher(self.tracker)
     
     def get_elapsed_time(self) -> float:
         """Get time elapsed since game start in seconds."""
@@ -204,6 +206,7 @@ class MiniMetro:
         station = Station(x, y, type, self.tracker)
         self.tracker.station_types.add(type)
         self.tracker.serviced_stations[station.id] = 0
+        self.tracker.station_service_dict[station.id] = set()
         self.stations.append(station)
         
         self.last_spawn_time = time.time()
@@ -226,6 +229,9 @@ class MiniMetro:
             self.lines_available.add(new_line_color)
             self.max_trains += 1
             self.last_upgrade_time = time.time()
+            
+        self.grapher.render_mermaid_window()
+        # print(self.grapher.tracker_to_mermaid())
     
     def check_line(self, origin: Station, destination: Station) -> bool:
         """Check if a line between origin and destination already exists."""
@@ -387,12 +393,18 @@ class MiniMetro:
                     if train.line.id == line_to_extend.id:
                         train.segment_distances = train._calculate_all_segment_distances()
                         train.total_line_distance = sum(train.segment_distances)
+                        
                 print(f"Extended line to {destination.type()}")
                 self.selected_station = destination
                 self.tracker.serviced_stations[destination.id] += 1
+                
+                self.tracker.station_service_dict[destination.id].add(origin.type)
+                self.tracker.station_service_dict[origin.id].add(destination.type)
+                self.tracker.line_service_dict[line_to_extend.id].add(destination.type)
             else:
                 print("Cannot extend line here")
                 self.selected_station = None
+                
         elif self.check_line(origin, destination):
             # Create new line
             if len(self.lines_available) == 0:
@@ -401,6 +413,14 @@ class MiniMetro:
             new_line = Line([origin, destination], new_line_color)
             self.tracker.serviced_stations[origin.id] += 1
             self.tracker.serviced_stations[destination.id] += 1
+            
+            self.tracker.station_service_dict[destination.id].add(origin.type)
+            self.tracker.station_service_dict[origin.id].add(destination.type)
+            
+            self.tracker.line_service_dict[new_line.id] = set()
+            self.tracker.line_service_dict[new_line.id].add(origin.type)
+            self.tracker.line_service_dict[new_line.id].add(destination.type)
+            
             self.lines.append(new_line)
             if self.train_quantity < self.max_trains:
                 self.trains.append(Train(line=new_line, tracker=self.tracker))
