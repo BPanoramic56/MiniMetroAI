@@ -13,12 +13,12 @@ BACKGROUNDS_DIR: Path = ASSETS_DIR / "Backgrounds"
 
 # Station sprite paths
 STATION_SPRITES: Dict[StationType, str] = {
-    StationType.Circle: "station_circle.png",
-    StationType.Triangle: "station_triangle.png",
-    StationType.Square: "station_square.png",
-    StationType.Cross: "station_cross.png",
-    StationType.Pentagon: "station_pentagon.png",
-    StationType.Hexagon: "station_hexagon.png",
+    StationType.Circle: "circle.png",
+    StationType.Triangle: "triangle.png",
+    StationType.Square: "square.png",
+    StationType.Cross: "cross.png",
+    StationType.Pentagon: "pentagon.png",
+    StationType.Hexagon: "hexagon.png",
 }
 
 # Train sprite paths
@@ -30,12 +30,12 @@ TRAIN_SPRITES: Dict[TrainType, str] = {
 
 # Rider sprite paths
 RIDER_SPRITES: Dict[StationType, str] = {
-    StationType.Circle: "rider_circle.png",
-    StationType.Triangle: "rider_triangle.png",
-    StationType.Square: "rider_square.png",
-    StationType.Cross: "rider_cross.png",
-    StationType.Pentagon: "rider_pentagon.png",
-    StationType.Hexagon: "rider_hexagon.png",
+    StationType.Circle: "circle.png",
+    StationType.Triangle: "triangle.png",
+    StationType.Square: "square.png",
+    StationType.Cross: "cross.png",
+    StationType.Pentagon: "pentagon.png",
+    StationType.Hexagon: "hexagon.png",
 }
 
 
@@ -46,7 +46,7 @@ class ResourceManager:
         self.station_sprites: Dict[StationType, pygame.Surface] = {}
         self.train_sprites: Dict[TrainType, pygame.Surface] = {}
         self.rider_sprites: Dict[StationType, pygame.Surface] = {}
-        self.background: Optional[pygame.Surface] = None
+        self.background: Optional[pygame.Surface] = self.load_background()
         self.use_sprites: bool = False
         self._sprites_loaded: bool = False
         
@@ -94,8 +94,9 @@ class ResourceManager:
             print(f"Error loading sprites: {e}")
             self.use_sprites = False
     
-    def load_background(self, filename: str) -> bool:
+    def load_background(self) -> bool:
         """Load a background image."""
+        filename = "back.png"
         path = BACKGROUNDS_DIR / filename
         if path.exists():
             try:

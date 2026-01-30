@@ -15,8 +15,8 @@ from typeEnums import StationType
 from resourceManager import resources
 
 # Fixed constants
-WIDTH: int      = 800
-HEIGHT: int     = 800
+WIDTH: int      = 1000
+HEIGHT: int     = 1000
 FPS: int        = 60
 UI_HEIGHT: int  = 60
 SIDEBAR_WIDTH: int = 100
@@ -26,6 +26,8 @@ STATION_SPACING: int            = 80
 STATION_SPAWN_INTERVAL: float   = 10.0
 CLICK_SPACING: int              = 20
 STATION_MAX: int                = 100
+UPGRADE_INTERVAL: int           = 1
+MAX_LINES: int                  = 8
 
 # Visual constants
 COLORS: Dict[str, Tuple[int, int, int]] = {
@@ -64,12 +66,17 @@ class MiniMetro:
         
         self.lines: List[Line] = []
         self.trains: List[Train] = []
+        
+        self.last_upgrade_time: float = time.time()
 
         self.lines_available: Set[Tuple[int, int, int]]= set([
             (255, 0, 0),
             (0, 255, 0),
             (0, 0, 255)
         ])
+        
+        self.max_trains: int = len(self.lines_available)
+        self.train_quantity = 0
         
         self.tracker = Tracker()
     
@@ -107,19 +114,26 @@ class MiniMetro:
         pygame.draw.line(self.screen, COLORS["UI_LINE_COLOR"], (0, HEIGHT - UI_HEIGHT), (WIDTH, HEIGHT - UI_HEIGHT), 2)
         
         elapsed = int(self.get_elapsed_time())
-        info_text = self.font.render(
+        info_text_time = self.font.render(
             f"Time: {elapsed}s  |  Stations: {len(self.stations)}",
             True,
             COLORS["UI_TEXT_COLOR"]
         )
-        self.screen.blit(info_text, (20, HEIGHT - UI_HEIGHT + 18))
+        self.screen.blit(info_text_time, (20, HEIGHT - UI_HEIGHT + 18))
         
-        info_text = self.font.render(
+        info_text_passengers = self.font.render(
             f"Passengers: {self.tracker.total_passengers}  |  Arrived: {self.tracker.passengers_arrived} | Lost: {self.tracker.passengers_lost}",
             True,
             COLORS["UI_TEXT_COLOR"]
         )
-        self.screen.blit(info_text, (300, HEIGHT - UI_HEIGHT + 18))
+        self.screen.blit(info_text_passengers, (250, HEIGHT - UI_HEIGHT + 18))
+        
+        info_text_trains = self.font.render(
+            f"Trains: {self.train_quantity} | Available: {self.max_trains - self.train_quantity}",
+            True,
+            COLORS["UI_TEXT_COLOR"]
+        )
+        self.screen.blit(info_text_trains, (700, HEIGHT - UI_HEIGHT + 18))
         
         pygame.display.flip()
     
@@ -130,6 +144,9 @@ class MiniMetro:
         pygame.draw.rect(self.screen, COLORS["SIDEBAR_BG"], sidebar_rect)
         pygame.draw.line(self.screen, COLORS["UI_LINE_COLOR"], (WIDTH - SIDEBAR_WIDTH, 0), (WIDTH - SIDEBAR_WIDTH, HEIGHT - UI_HEIGHT), 2)
         
+        line_colors = [x.color for x in self.lines]
+        unused_colors = [x for x in self.lines_available if x not in line_colors]
+
         # Draw line color indicators
         y_offset = LINE_COLOR_PADDING
         for line in self.lines:
@@ -142,9 +159,19 @@ class MiniMetro:
             
             # Draw border if selected
             if line.selected:
-                pygame.draw.circle(self.screen, (255, 255, 255), (x_center, y_center), size // 2, 3)
+                pygame.draw.circle(self.screen,  (255, 255, 255), (x_center, y_center), size // 2, 3)
             
             y_offset += size + LINE_COLOR_PADDING
+            
+        size = LINE_COLOR_SIZE
+        for line_color in unused_colors:
+            x_center = WIDTH - SIDEBAR_WIDTH // 2
+            y_center = y_offset + size // 2
+            
+            pygame.draw.circle(self.screen, line_color, (x_center, y_center), size // 2, 3)
+
+            y_offset += size + LINE_COLOR_PADDING
+            
     
     def is_valid_location(self, x: int, y: int) -> bool:
         """Check if location is valid (not too close to existing stations)."""
@@ -190,6 +217,15 @@ class MiniMetro:
             station.update()
         for train in self.trains:
             train.update()
+            
+        if len(self.lines_available) < MAX_LINES and int(time.time() - self.last_upgrade_time) == UPGRADE_INTERVAL:
+            new_line_color = (randint(100, 255), randint(100, 255), randint(100, 255))
+            while new_line_color in self.lines_available:
+                new_line_color = (randint(0, 255), randint(0, 255), randint(0, 255))
+                
+            self.lines_available.add(new_line_color)
+            self.max_trains += 1
+            self.last_upgrade_time = time.time()
     
     def check_line(self, origin: Station, destination: Station) -> bool:
         """Check if a line between origin and destination already exists."""
@@ -215,6 +251,7 @@ class MiniMetro:
                 
             self.lines.remove(line_to_remove)
             self.trains = [train for train in self.trains if train.line.id != line_id]
+            self.train_quantity = len(self.trains)
                 
             self.lines_available.add(line.color)
             print(f"Deleted line {line_id}")
@@ -228,8 +265,9 @@ class MiniMetro:
             if train.id == train_id:
                 train_to_remove = train
                 break
-        
+            
         if train_to_remove:
+            self.train_quantity -= 1
             self.trains.remove(train_to_remove)
             print(f"Deleted train {train_id}")
             return True
@@ -364,7 +402,9 @@ class MiniMetro:
             self.tracker.serviced_stations[origin.id] += 1
             self.tracker.serviced_stations[destination.id] += 1
             self.lines.append(new_line)
-            self.trains.append(Train(line=new_line, tracker=self.tracker))
+            if self.train_quantity < self.max_trains:
+                self.trains.append(Train(line=new_line, tracker=self.tracker))
+                self.train_quantity += 1
             print(f"Created line and train between {origin.type()} and {destination.type()}")
             self.selected_station = destination
         else:

@@ -15,7 +15,7 @@ class TrainType(Enum):
     HighCapacity = 2
     
     @property
-    def capacity(self) -> int:
+    def capacity(self) -> int: 
         return {
             TrainType.Regular: 5,
             TrainType.Express: 5,
@@ -23,10 +23,10 @@ class TrainType(Enum):
         }[self]
     
     @property
-    def speed(self) -> int:
+    def speed(self) -> float:
         return {
             TrainType.Regular: 4.0,
-            TrainType.Express: 6.4,
+            TrainType.Express: 50.0, # Very high, but the acceleration makes it fair
             TrainType.HighCapacity: 3.2,
         }[self]
     

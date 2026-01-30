@@ -15,6 +15,7 @@ from resourceManager import resources
 
 # Design constants
 TRAIN_DWELL_TIME: float = 0.5
+TRAIN_ACCELERATION = 0.025
 
 # Visual constants
 TRAIN_SIZE: int = 12
@@ -32,8 +33,10 @@ class Train:
         self.line: Line = line
         self.riders: List[Rider] = []
         self.type: TrainType = type
-        self.capacity = type.capacity
-        self.speed = type.speed
+        self.capacity: int = type.capacity
+        self.speed: float = 0
+        self.max_speed: float = type.speed
+        self.acceleration: float = TRAIN_ACCELERATION
 
         self.current_station_index: int = 0
         self.distance_traveled: float = 0.0
@@ -102,6 +105,7 @@ class Train:
         if self.at_station:
             if time.time() - self.station_arrival_time - (min(len(self.station_parked.riders), self.capacity) * 0.5) >= TRAIN_DWELL_TIME:
                 self.at_station = False
+                self.speed = 0
             else:
                 # Unload passengers at their destination
                 remaining_riders = [rider for rider in self.riders if rider.destination_type != self.station_parked.station_type]
@@ -127,6 +131,8 @@ class Train:
         
         # Move the train
         if self.forward:
+            self.speed = min(self.speed + self.acceleration, self.max_speed)
+
             self.distance_traveled += self.speed
             
             # Check for arrival at station
@@ -149,7 +155,9 @@ class Train:
                     self.current_station_index = len(self.line.stations) - 1
                     if not self.at_station:
                         self._arrive_at_station(self.line.stations[-1])
+                self.speed = 0
         else:
+            self.speed = min(self.speed + self.acceleration, self.max_speed)
             self.distance_traveled -= self.speed
             
             # Check for arrival at station
@@ -162,6 +170,7 @@ class Train:
             if self.distance_traveled <= 0.0:
                 self.distance_traveled = 0.0
                 self.forward = True
+                self.speed = 0
                 self.current_station_index = 0
                 if not self.at_station:
                     self._arrive_at_station(self.line.stations[0])

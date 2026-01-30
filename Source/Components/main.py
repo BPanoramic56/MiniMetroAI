@@ -31,9 +31,13 @@ if __name__ == "__main__":
                     paused = not paused
                 elif event.key == pygame.K_t:
                     if metro.lines:
-                        line = random.choice(metro.lines)
-                        metro.trains.append(minimetro.Train(line, TrainType(randint(0, len(TrainType) - 1))))
-                        print(f"Created train on line (Total: {len(metro.trains)})")
+                        if metro.train_quantity < metro.max_trains:
+                            line = random.choice(metro.lines)
+                            metro.trains.append(minimetro.Train(line, TrainType(randint(0, len(TrainType) - 1))))
+                            metro.train_quantity += 1
+                            print(f"Created train on line (Total: {len(metro.trains)})")
+                        else:
+                            print("No trains available")
                 elif event.key == pygame.K_p:
                     if metro.stations:
                         choice(metro.stations).create_passenger()

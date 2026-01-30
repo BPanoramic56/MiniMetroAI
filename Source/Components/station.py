@@ -19,9 +19,9 @@ RIDER_SPAWN_INTERVAL: float = 5.0
 
 # Visual constants
 STATION_SIZE: int = 20
-UNSERVICED_COLOR: Tuple[int, int, int] = (190, 150, 150)
-SERVICED_COLOR: Tuple[int, int, int] = (150, 150, 190)
-SELECTED_COLOR: Tuple[int, int, int] = (150, 150, 250)
+UNSERVICED_COLOR: Tuple[int, int, int] = (175, 100, 100)
+SERVICED_COLOR: Tuple[int, int, int] = (80, 80, 255)
+SELECTED_COLOR: Tuple[int, int, int] = (255, 255, 255)
 
 
 class Station:
@@ -47,14 +47,14 @@ class Station:
         return f"{self.station_type.name} at ({self.x}, {self.y})"
     
     def render(self, screen: pygame.Surface, selected: bool = False) -> None:
-        """Render the station shape on the given surface."""
-        color = SELECTED_COLOR if selected else (UNSERVICED_COLOR if self.tracker.serviced_stations[self.id] == 0 else SERVICED_COLOR)
-        
+        """Render the station shape on the given surface."""        
         # Try to render sprite first
+        color = SELECTED_COLOR if selected else (UNSERVICED_COLOR if self.tracker.serviced_stations[self.id] == 0 else SERVICED_COLOR)
         sprite = resources.get_station_sprite(self.station_type, STATION_SIZE)
         if sprite and resources.use_sprites:
             # Tint the sprite with the color
             tinted_sprite = sprite.copy()
+            tinted_sprite.fill(color, special_flags=pygame.BLEND_RGBA_MULT)
             rect = tinted_sprite.get_rect(center=(self.x, self.y))
             screen.blit(tinted_sprite, rect)
         else:
